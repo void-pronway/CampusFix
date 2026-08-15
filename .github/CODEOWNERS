@@ -1,0 +1,47 @@
+# Replace placeholders with actual GitHub usernames.
+
+# MEMBER 1 — Core / DB / Auth
+/config/ @MEMBER1_USERNAME
+/database/schema/00_database.sql @MEMBER1_USERNAME
+/database/schema/01_core_tables.sql @MEMBER1_USERNAME
+/database/seed/ @MEMBER1_USERNAME
+/modules/auth/ @MEMBER1_USERNAME
+/includes/bootstrap.php @MEMBER1_USERNAME
+/includes/auth_guard.php @MEMBER1_USERNAME
+/includes/functions.php @MEMBER1_USERNAME
+/includes/csrf.php @MEMBER1_USERNAME
+/includes/upload.php @MEMBER1_USERNAME
+/admin/users/ @MEMBER1_USERNAME
+/index.php @MEMBER1_USERNAME
+/login.php @MEMBER1_USERNAME
+/register.php @MEMBER1_USERNAME
+/logout.php @MEMBER1_USERNAME
+/profile.php @MEMBER1_USERNAME
+
+# MEMBER 2 — Issues
+/modules/issues/ @MEMBER2_USERNAME
+/student/issues/ @MEMBER2_USERNAME
+/admin/issues/ @MEMBER2_USERNAME
+/staff/issues/ @MEMBER2_USERNAME
+/database/schema/02_issue_tables.sql @MEMBER2_USERNAME
+/database/queries/issue_queries.sql @MEMBER2_USERNAME
+
+# MEMBER 3 — Lost & Found + Dashboard Data
+/modules/lostfound/ @MEMBER3_USERNAME
+/modules/dashboard/ @MEMBER3_USERNAME
+/student/lostfound/ @MEMBER3_USERNAME
+/admin/lostfound/ @MEMBER3_USERNAME
+/admin/analytics_data.php @MEMBER3_USERNAME
+/database/schema/03_lostfound_tables.sql @MEMBER3_USERNAME
+/database/queries/lostfound_queries.sql @MEMBER3_USERNAME
+/database/queries/analytics_queries.sql @MEMBER3_USERNAME
+
+# MEMBER 4 — UI / UX / Dashboards / ERD
+/includes/layout/ @MEMBER4_USERNAME
+/assets/ @MEMBER4_USERNAME
+/student/dashboard.php @MEMBER4_USERNAME
+/admin/dashboard.php @MEMBER4_USERNAME
+/admin/analytics.php @MEMBER4_USERNAME
+/staff/dashboard.php @MEMBER4_USERNAME
+/docs/ERD.drawio @MEMBER4_USERNAME
+/docs/ERD.png @MEMBER4_USERNAME
