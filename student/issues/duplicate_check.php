@@ -23,12 +23,46 @@ if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
 $userId = (int) $_SESSION['user_id'];
 $csrfToken = csrf_token();
 
-$title = trim($_POST['title'] ?? '');
-$description = trim($_POST['description'] ?? '');
+$title = trim((string) ($_POST['title'] ?? ''));
+$description = trim((string) ($_POST['description'] ?? ''));
 $categoryId = (int) ($_POST['category_id'] ?? 0);
 $locationId = (int) ($_POST['location_id'] ?? 0);
-$priority = trim($_POST['priority'] ?? 'Medium');
-$visibility = trim($_POST['visibility'] ?? 'Public');
+$priority = trim((string) ($_POST['priority'] ?? 'Medium'));
+$visibility = trim((string) ($_POST['visibility'] ?? 'Public'));
+
+function escapeHtml(mixed $value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function removePendingImage(array $pendingIssue): void
+{
+    $imagePath = (string) ($pendingIssue['image_path'] ?? '');
+
+    if (
+        $imagePath === ''
+        || !str_starts_with(
+            $imagePath,
+            'assets/uploads/issues/'
+        )
+    ) {
+        return;
+    }
+
+    $absolutePath = __DIR__ . '/../../' . $imagePath;
+
+    if (is_file($absolutePath)) {
+        unlink($absolutePath);
+    }
+}
+
+$previousPendingIssue = $_SESSION['pending_issue'] ?? null;
+
+if (is_array($previousPendingIssue)) {
+    removePendingImage($previousPendingIssue);
+}
+
+unset($_SESSION['pending_issue']);
 
 $errors = [];
 
@@ -56,8 +90,121 @@ if (!IssueService::isValidVisibility($visibility)) {
     $errors[] = 'Please select a valid visibility option.';
 }
 
-$repository = new IssueRepository($pdo);
+if ($errors === []) {
+    $categoryStmt = $pdo->prepare(
+        "SELECT id
+         FROM issue_categories
+         WHERE id = :id
+         LIMIT 1"
+    );
 
+    $categoryStmt->execute([
+        ':id' => $categoryId,
+    ]);
+
+    if ($categoryStmt->fetchColumn() === false) {
+        $errors[] = 'The selected category does not exist.';
+    }
+
+    $locationStmt = $pdo->prepare(
+        "SELECT l_id
+         FROM locations
+         WHERE l_id = :id
+         LIMIT 1"
+    );
+
+    $locationStmt->execute([
+        ':id' => $locationId,
+    ]);
+
+    if ($locationStmt->fetchColumn() === false) {
+        $errors[] = 'The selected location does not exist.';
+    }
+}
+
+$imagePath = null;
+
+if ($errors === [] && isset($_FILES['image'])) {
+    $image = $_FILES['image'];
+    $uploadError = (int) ($image['error'] ?? UPLOAD_ERR_NO_FILE);
+
+    if ($uploadError !== UPLOAD_ERR_NO_FILE) {
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            $errors[] = 'Unable to upload the selected image.';
+        } else {
+            $temporaryPath = (string) ($image['tmp_name'] ?? '');
+            $imageSize = (int) ($image['size'] ?? 0);
+
+            if ($imageSize <= 0 || $imageSize > 5 * 1024 * 1024) {
+                $errors[] = 'Image size must not exceed 5 MB.';
+            } elseif (!is_uploaded_file($temporaryPath)) {
+                $errors[] = 'Invalid uploaded image.';
+            } else {
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($temporaryPath);
+
+                $allowedTypes = [
+                    'image/jpeg' => 'jpg',
+                    'image/png' => 'png',
+                ];
+
+                if (
+                    !is_string($mimeType)
+                    || !array_key_exists($mimeType, $allowedTypes)
+                ) {
+                    $errors[] = 'Only JPEG and PNG images are allowed.';
+                } else {
+                    $uploadDirectory =
+                        __DIR__ . '/../../assets/uploads/issues';
+
+                    if (
+                        !is_dir($uploadDirectory)
+                        && !mkdir(
+                            $uploadDirectory,
+                            0775,
+                            true
+                        )
+                        && !is_dir($uploadDirectory)
+                    ) {
+                        $errors[] =
+                            'Unable to prepare the image upload directory.';
+                    } else {
+                        try {
+                            $fileName =
+                                bin2hex(random_bytes(16))
+                                . '.'
+                                . $allowedTypes[$mimeType];
+
+                            $absolutePath =
+                                $uploadDirectory
+                                . DIRECTORY_SEPARATOR
+                                . $fileName;
+
+                            if (
+                                !move_uploaded_file(
+                                    $temporaryPath,
+                                    $absolutePath
+                                )
+                            ) {
+                                $errors[] =
+                                    'Unable to save the uploaded image.';
+                            } else {
+                                $imagePath =
+                                    'assets/uploads/issues/'
+                                    . $fileName;
+                            }
+                        } catch (Throwable $e) {
+                            $errors[] =
+                                'Unable to save the uploaded image.';
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+$repository = new IssueRepository($pdo);
 $duplicates = [];
 
 if ($errors === []) {
@@ -68,30 +215,29 @@ if ($errors === []) {
 
     foreach ($candidates as $candidate) {
         if (
-    DuplicateService::isPotentialDuplicate(
-        (string) $candidate['title'],
-        $title,
-        (int) $candidate['category_id'],
-        $categoryId,
-        (int) $candidate['location_id'],
-        $locationId
-    )
-) {
-    $duplicates[] = $candidate;
-}
+            DuplicateService::isPotentialDuplicate(
+                (string) $candidate['title'],
+                $title,
+                (int) $candidate['category_id'],
+                $categoryId,
+                (int) $candidate['location_id'],
+                $locationId
+            )
+        ) {
+            $duplicates[] = $candidate;
+        }
     }
+
+    $_SESSION['pending_issue'] = [
+        'title' => $title,
+        'description' => $description,
+        'category_id' => $categoryId,
+        'location_id' => $locationId,
+        'priority' => $priority,
+        'visibility' => $visibility,
+        'image_path' => $imagePath,
+    ];
 }
-
-$pendingIssue = [
-    'title' => $title,
-    'description' => $description,
-    'category_id' => $categoryId,
-    'location_id' => $locationId,
-    'priority' => $priority,
-    'visibility' => $visibility,
-];
-
-$_SESSION['pending_issue'] = $pendingIssue;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -142,11 +288,7 @@ $_SESSION['pending_issue'] = $pendingIssue;
                 <ul>
                     <?php foreach ($errors as $error): ?>
                         <li>
-                            <?= htmlspecialchars(
-                                $error,
-                                ENT_QUOTES,
-                                'UTF-8'
-                            ) ?>
+                            <?= escapeHtml($error) ?>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -172,8 +314,9 @@ $_SESSION['pending_issue'] = $pendingIssue;
                     <input
                         type="hidden"
                         name="csrf_token"
-                        value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+                        value="<?= escapeHtml($csrfToken) ?>"
                     >
+
                     <input
                         type="hidden"
                         name="action"
@@ -215,27 +358,15 @@ $_SESSION['pending_issue'] = $pendingIssue;
                     <?php foreach ($duplicates as $issue): ?>
                         <tr>
                             <td>
-                                <?= htmlspecialchars(
-                                    (string) $issue['title'],
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>
+                                <?= escapeHtml($issue['title']) ?>
                             </td>
 
                             <td>
-                                <?= htmlspecialchars(
-                                    (string) $issue['priority'],
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>
+                                <?= escapeHtml($issue['priority']) ?>
                             </td>
 
                             <td>
-                                <?= htmlspecialchars(
-                                    (string) $issue['status'],
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>
+                                <?= escapeHtml($issue['status']) ?>
                             </td>
 
                             <td>
@@ -243,11 +374,12 @@ $_SESSION['pending_issue'] = $pendingIssue;
                                     action="confirm.php"
                                     method="POST"
                                 >
-                                <input
+                                    <input
                                         type="hidden"
                                         name="csrf_token"
-                                        value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+                                        value="<?= escapeHtml($csrfToken) ?>"
                                     >
+
                                     <input
                                         type="hidden"
                                         name="action"
@@ -278,8 +410,9 @@ $_SESSION['pending_issue'] = $pendingIssue;
                     <input
                         type="hidden"
                         name="csrf_token"
-                        value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
-    >
+                        value="<?= escapeHtml($csrfToken) ?>"
+                    >
+
                     <input
                         type="hidden"
                         name="action"

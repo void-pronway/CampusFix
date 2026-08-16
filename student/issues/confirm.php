@@ -20,9 +20,30 @@ if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
 }
 
 $userId = (int) $_SESSION['user_id'];
-$action = trim($_POST['action'] ?? '');
+$action = trim((string) ($_POST['action'] ?? ''));
 
 $repository = new IssueRepository($pdo);
+
+function deletePendingImage(array $pendingIssue): void
+{
+    $imagePath = (string) ($pendingIssue['image_path'] ?? '');
+
+    if (
+        $imagePath === ''
+        || !str_starts_with(
+            $imagePath,
+            'assets/uploads/issues/'
+        )
+    ) {
+        return;
+    }
+
+    $absolutePath = __DIR__ . '/../../' . $imagePath;
+
+    if (is_file($absolutePath)) {
+        unlink($absolutePath);
+    }
+}
 
 if ($action === 'create') {
     $pendingIssue = $_SESSION['pending_issue'] ?? null;
@@ -48,6 +69,33 @@ if ($action === 'create') {
         }
     }
 
+    $imagePath = null;
+
+    if (!empty($pendingIssue['image_path'])) {
+        $candidateImagePath =
+            (string) $pendingIssue['image_path'];
+
+        if (
+            !str_starts_with(
+                $candidateImagePath,
+                'assets/uploads/issues/'
+            )
+        ) {
+            http_response_code(400);
+            exit('Invalid pending image path.');
+        }
+
+        $absoluteImagePath =
+            __DIR__ . '/../../' . $candidateImagePath;
+
+        if (!is_file($absoluteImagePath)) {
+            http_response_code(400);
+            exit('Uploaded image could not be found.');
+        }
+
+        $imagePath = $candidateImagePath;
+    }
+
     try {
         $pdo->beginTransaction();
 
@@ -56,10 +104,12 @@ if ($action === 'create') {
             'reported_by' => $userId,
             'location_id' => (int) $pendingIssue['location_id'],
             'title' => trim((string) $pendingIssue['title']),
-            'description' => trim((string) $pendingIssue['description']),
+            'description' => trim(
+                (string) $pendingIssue['description']
+            ),
             'visibility' => (string) $pendingIssue['visibility'],
             'priority' => (string) $pendingIssue['priority'],
-            'image_path' => null,
+            'image_path' => $imagePath,
         ]);
 
         $repository->addStatusLog(
@@ -108,6 +158,12 @@ if ($action === 'confirm') {
     try {
         if (!$repository->hasUserConfirmed($issueId, $userId)) {
             $repository->addConfirmation($issueId, $userId);
+        }
+
+        $pendingIssue = $_SESSION['pending_issue'] ?? null;
+
+        if (is_array($pendingIssue)) {
+            deletePendingImage($pendingIssue);
         }
 
         unset($_SESSION['pending_issue']);

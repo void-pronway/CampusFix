@@ -5,6 +5,7 @@
 !/assets/uploads/.htaccess
 !/assets/uploads/issues/
 !/assets/uploads/lostfound/
+/assets/uploads/issues/*
 !/assets/uploads/issues/.gitkeep
 !/assets/uploads/lostfound/.gitkeep
 .vscode/
