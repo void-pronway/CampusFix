@@ -174,6 +174,55 @@ public function countConfirmations(int $issueId): int
     return (int) $stmt->fetchColumn();
 }
 
+public function addStatusLog(
+    int $issueId,
+    int $changedBy,
+    ?string $oldStatus,
+    string $newStatus,
+    ?string $note = null
+): bool {
+    $stmt = $this->pdo->prepare(
+        "INSERT INTO issue_status_logs (
+            issue_id,
+            changed_by,
+            old_status,
+            new_status,
+            note
+        )
+        VALUES (
+            :issue_id,
+            :changed_by,
+            :old_status,
+            :new_status,
+            :note
+        )"
+    );
+
+    return $stmt->execute([
+        ':issue_id' => $issueId,
+        ':changed_by' => $changedBy,
+        ':old_status' => $oldStatus,
+        ':new_status' => $newStatus,
+        ':note' => $note,
+    ]);
+}
+
+public function getStatusHistory(int $issueId): array
+{
+    $stmt = $this->pdo->prepare(
+        "SELECT *
+         FROM issue_status_logs
+         WHERE issue_id = :issue_id
+         ORDER BY changed_at ASC, id ASC"
+    );
+
+    $stmt->execute([
+        ':issue_id' => $issueId,
+    ]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 }
 
 
