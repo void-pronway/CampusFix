@@ -39,3 +39,13 @@ LEFT JOIN locations l
     AND l.location_name = places.location_name
 WHERE b.building_code = 'CCA'
   AND l.l_id IS NULL;
+
+  INSERT IGNORE INTO issue_categories (name) VALUES
+('Electrical'),
+('Internet'),
+('Cleaning'),
+('Water'),
+('Classroom Equipment'),
+('Furniture'),
+('Security'),
+('Other');
