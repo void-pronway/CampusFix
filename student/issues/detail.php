@@ -17,7 +17,6 @@ if ($issueId <= 0) {
 }
 
 $repository = new IssueRepository($pdo);
-
 $issue = $repository->findById($issueId);
 
 if ($issue === null) {
@@ -31,6 +30,56 @@ $isPublic = (string) $issue['visibility'] === 'Public';
 if (!$isOwner && !$isPublic) {
     http_response_code(403);
     exit('Access denied.');
+}
+
+$categoryStmt = $pdo->prepare(
+    "SELECT name
+     FROM issue_categories
+     WHERE id = :id
+     LIMIT 1"
+);
+
+$categoryStmt->execute([
+    ':id' => (int) $issue['category_id'],
+]);
+
+$categoryName = $categoryStmt->fetchColumn();
+
+$locationStmt = $pdo->prepare(
+    "SELECT
+        l.location_name,
+        l.floor,
+        l.room_no,
+        b.building_name
+     FROM locations AS l
+     INNER JOIN building AS b
+        ON b.building_id = l.building_id
+     WHERE l.l_id = :id
+     LIMIT 1"
+);
+
+$locationStmt->execute([
+    ':id' => (int) $issue['location_id'],
+]);
+
+$location = $locationStmt->fetch(PDO::FETCH_ASSOC);
+
+$imageUrl = null;
+$storedImagePath = (string) ($issue['image_path'] ?? '');
+
+if (
+    $storedImagePath !== ''
+    && str_starts_with(
+        $storedImagePath,
+        'assets/uploads/issues/'
+    )
+) {
+    $absoluteImagePath =
+        __DIR__ . '/../../' . $storedImagePath;
+
+    if (is_file($absoluteImagePath)) {
+        $imageUrl = '../../' . $storedImagePath;
+    }
 }
 
 $confirmationCount = $repository->countConfirmations($issueId);
@@ -78,6 +127,7 @@ function escapeHtml(mixed $value): string
         <div class="page-header">
             <div>
                 <h1><?= escapeHtml($issue['title']) ?></h1>
+
                 <p>
                     Issue <?= (int) $issue['id'] ?>
                 </p>
@@ -89,6 +139,7 @@ function escapeHtml(mixed $value): string
         </div>
 
         <section class="panel">
+
             <h2>Issue Information</h2>
 
             <p>
@@ -107,18 +158,57 @@ function escapeHtml(mixed $value): string
             </p>
 
             <p>
-                <strong>Category ID:</strong>
-                <?= (int) $issue['category_id'] ?>
+                <strong>Category:</strong>
+                <?= escapeHtml($categoryName ?: 'Unknown') ?>
             </p>
 
             <p>
-                <strong>Location ID:</strong>
-                <?= (int) $issue['location_id'] ?>
+                <strong>Location:</strong>
+
+                <?php if ($location !== false): ?>
+
+                    <?= escapeHtml(
+                        $location['building_name']
+                        . ' - '
+                        . $location['location_name']
+                    ) ?>
+
+                <?php else: ?>
+
+                    Unknown
+
+                <?php endif; ?>
             </p>
+
+            <?php if (
+                $location !== false
+                && $location['floor'] !== null
+                && $location['floor'] !== ''
+            ): ?>
+
+                <p>
+                    <strong>Floor:</strong>
+                    <?= escapeHtml($location['floor']) ?>
+                </p>
+
+            <?php endif; ?>
+
+            <?php if (
+                $location !== false
+                && $location['room_no'] !== null
+                && $location['room_no'] !== ''
+            ): ?>
+
+                <p>
+                    <strong>Room:</strong>
+                    <?= escapeHtml($location['room_no']) ?>
+                </p>
+
+            <?php endif; ?>
 
             <p>
                 <strong>Community Confirmations:</strong>
-                <?= $confirmationCount ?>
+                <?= (int) $confirmationCount ?>
             </p>
 
             <p>
@@ -147,7 +237,22 @@ function escapeHtml(mixed $value): string
                 <?= nl2br(escapeHtml($issue['description'])) ?>
             </p>
 
+            <?php if ($imageUrl !== null): ?>
+
+                <h3>Supporting Image</h3>
+
+                <p>
+                    <img
+                        src="<?= escapeHtml($imageUrl) ?>"
+                        alt="Supporting image for this issue"
+                        style="max-width: 100%; height: auto;"
+                    >
+                </p>
+
+            <?php endif; ?>
+
             <?php if (!empty($issue['rejection_note'])): ?>
+
                 <h3>Rejection Note</h3>
 
                 <p>
@@ -155,10 +260,13 @@ function escapeHtml(mixed $value): string
                         escapeHtml($issue['rejection_note'])
                     ) ?>
                 </p>
+
             <?php endif; ?>
+
         </section>
 
         <section class="panel">
+
             <h2>Status History</h2>
 
             <?php if ($statusHistory === []): ?>
@@ -195,7 +303,7 @@ function escapeHtml(mixed $value): string
                             </td>
 
                             <td>
-                                <?= (int) $history['changed_by'] ?>
+                                User <?= (int) $history['changed_by'] ?>
                             </td>
 
                             <td>
@@ -221,9 +329,11 @@ function escapeHtml(mixed $value): string
                 </table>
 
             <?php endif; ?>
+
         </section>
 
         <section class="panel">
+
             <h2>Comments</h2>
 
             <?php if ($comments === []): ?>
@@ -233,7 +343,9 @@ function escapeHtml(mixed $value): string
             <?php else: ?>
 
                 <?php foreach ($comments as $comment): ?>
+
                     <div class="panel">
+
                         <p>
                             <strong>
                                 User <?= (int) $comment['user_id'] ?>
@@ -256,12 +368,15 @@ function escapeHtml(mixed $value): string
                                 )
                             ) ?>
                         </p>
+
                     </div>
+
                 <?php endforeach; ?>
 
             <?php endif; ?>
 
             <form action="comment.php" method="POST">
+
                 <input
                     type="hidden"
                     name="csrf_token"
@@ -286,10 +401,15 @@ function escapeHtml(mixed $value): string
                     ></textarea>
                 </div>
 
-                <button type="submit" class="btn btn-primary">
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
                     Add Comment
                 </button>
+
             </form>
+
         </section>
 
     </main>
