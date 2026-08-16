@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/auth_guard.php';
+require_once __DIR__ . '/../modules/dashboard/DashboardService.php';
+
 require_role(['admin']);
+
+$dashboardService = new DashboardService($pdo);
+$stats = $dashboardService->getAdminDashboardStats();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,12 +55,12 @@ require_role(['admin']);
 
             <div class="stat-card">
                 <h3>Pending</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['pending_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>Assigned</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['total_issues'] ?></div>
             </div>
 
             <div class="stat-card">
