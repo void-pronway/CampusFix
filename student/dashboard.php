@@ -91,13 +91,12 @@ $recentIssues = $dashboardService->getRecentStudentIssues($userId, 5);
                         <th>Date</th>
                     </tr>
                 </thead>
-
                 <tbody>
 
                 <?php if (!$recentIssues): ?>
 
                     <tr>
-                        <td colspan="4">No issues available yet.</td>
+                         <td colspan="4">No issues available yet.</td>
                     </tr>
 
                 <?php else: ?>
