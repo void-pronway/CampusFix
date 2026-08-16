@@ -1,13 +1,11 @@
-
-
+USE campusfix;
 
 SET @student_id = 1;
 SET @issue_id = 1;
 SET @staff_id = 1;
 SET @filter_status = 'Pending';
 SET @filter_priority = 'High';
-
-
+SET @search_text = 'wifi';
 
 SELECT
     id,
@@ -23,8 +21,6 @@ FROM issues
 WHERE reported_by = @student_id
 ORDER BY created_at DESC;
 
-
-
 SELECT
     id,
     reported_by,
@@ -37,8 +33,6 @@ SELECT
 FROM issues
 ORDER BY created_at DESC;
 
-
-
 SELECT
     id,
     title,
@@ -48,8 +42,6 @@ SELECT
 FROM issues
 WHERE status = @filter_status
 ORDER BY created_at DESC;
-
-
 
 SELECT
     id,
@@ -61,14 +53,10 @@ FROM issues
 WHERE priority = @filter_priority
 ORDER BY created_at DESC;
 
-
-
 SELECT
     COUNT(*) AS confirmation_count
 FROM issue_confirmations
 WHERE issue_id = @issue_id;
-
-
 
 SELECT
     old_status,
@@ -80,8 +68,6 @@ FROM issue_status_logs
 WHERE issue_id = @issue_id
 ORDER BY changed_at ASC;
 
-
-
 SELECT
     user_id,
     comment,
@@ -89,8 +75,6 @@ SELECT
 FROM comments
 WHERE issue_id = @issue_id
 ORDER BY created_at ASC;
-
-
 
 SELECT
     ia.id AS assignment_id,
@@ -107,8 +91,6 @@ INNER JOIN issues AS i
 WHERE ia.staff_id = @staff_id
 ORDER BY ia.assigned_at DESC;
 
-
-
 SELECT
     status,
     COUNT(*) AS total_issues
@@ -116,16 +98,12 @@ FROM issues
 GROUP BY status
 ORDER BY total_issues DESC;
 
-
-
 SELECT
     category_id,
     COUNT(*) AS total_issues
 FROM issues
 GROUP BY category_id
 ORDER BY total_issues DESC;
-
-
 
 SELECT
     id,
@@ -137,8 +115,6 @@ FROM issues
 ORDER BY created_at DESC
 LIMIT 5;
 
-
-
 SELECT
     category_id,
     COUNT(*) AS unresolved_issues
@@ -146,8 +122,6 @@ FROM issues
 WHERE status NOT IN ('Resolved', 'Rejected')
 GROUP BY category_id
 ORDER BY unresolved_issues DESC;
-
-
 
 SELECT
     location_id,
@@ -159,16 +133,12 @@ GROUP BY location_id
 HAVING COUNT(*) >= 2
 ORDER BY serious_issue_count DESC;
 
-
-
 SELECT
     staff_id,
     COUNT(*) AS assignment_count
 FROM issue_assignments
 GROUP BY staff_id
 ORDER BY assignment_count DESC;
-
-
 
 SELECT
     staff_id,
@@ -186,7 +156,27 @@ HAVING COUNT(*) > (
 )
 ORDER BY assignment_count DESC;
 
-
+SELECT
+    i.id,
+    i.title,
+    i.priority,
+    i.status,
+    c.name AS category,
+    b.building_name,
+    l.location_name,
+    CONCAT(u.f_name, ' ', u.l_name) AS reporter,
+    i.created_at
+FROM issues i
+JOIN issue_categories c
+    ON i.category_id = c.id
+JOIN locations l
+    ON i.location_id = l.l_id
+JOIN building b
+    ON l.building_id = b.building_id
+JOIN users u
+    ON i.reported_by = u.user_id
+WHERE i.reported_by = @student_id
+ORDER BY i.created_at DESC;
 
 SELECT
     i.id,
@@ -200,10 +190,6 @@ GROUP BY
     i.title
 ORDER BY confirmation_count DESC;
 
-
-
-SET @search_text = 'wifi';
-
 SELECT
     id,
     title,
@@ -216,8 +202,6 @@ WHERE title LIKE CONCAT('%', @search_text, '%')
    OR description LIKE CONCAT('%', @search_text, '%')
 ORDER BY created_at DESC;
 
-
-
 SELECT
     AVG(confirmation_count) AS average_confirmations
 FROM (
@@ -227,8 +211,6 @@ FROM (
     FROM issue_confirmations
     GROUP BY issue_id
 ) AS confirmation_summary;
-
-
 
 SELECT
     issue_id,
