@@ -48,9 +48,13 @@ CREATE TABLE IF NOT EXISTS building (
 CREATE TABLE IF NOT EXISTS locations (
     l_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     building_id INT UNSIGNED NOT NULL,
+    location_name VARCHAR(120) NULL,
     floor VARCHAR(30) NULL,
     floor_type VARCHAR(50) NULL,
     room_no VARCHAR(30) NULL,
+
+    CONSTRAINT uq_building_location
+    UNIQUE (building_id, location_name),
 
     CONSTRAINT fk_locations_building
         FOREIGN KEY (building_id)
