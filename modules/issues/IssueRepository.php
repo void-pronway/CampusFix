@@ -104,5 +104,30 @@ class IssueRepository
         ':id' => $issueId,
     ]);
 }
+
+public function findOpenDuplicateCandidates(
+    int $categoryId,
+    int $locationId
+): array {
+    $sql = "
+        SELECT *
+        FROM issues
+        WHERE category_id = :category_id
+          AND location_id = :location_id
+          AND status NOT IN ('Resolved', 'Rejected')
+        ORDER BY created_at DESC
+    ";
+
+    $stmt = $this->pdo->prepare($sql);
+
+    $stmt->execute([
+        ':category_id' => $categoryId,
+        ':location_id' => $locationId,
+    ]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+}
+
 
