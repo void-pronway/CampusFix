@@ -1,3 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../../includes/auth_guard.php';
+require_once __DIR__ . '/../../includes/csrf.php';
+
+require_role(['student']);
+
+$csrfToken = csrf_token();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,6 +57,12 @@
                 method="POST"
                 enctype="multipart/form-data"
             >
+
+            <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+                >
 
                 <div class="form-group">
                     <label for="title">Issue Title</label>

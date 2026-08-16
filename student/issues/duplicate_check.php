@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/auth_guard.php';
+require_once __DIR__ . '/../../includes/csrf.php';
 require_once __DIR__ . '/../../modules/issues/IssueService.php';
 require_once __DIR__ . '/../../modules/issues/DuplicateService.php';
 require_once __DIR__ . '/../../modules/issues/IssueRepository.php';
@@ -14,7 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+    http_response_code(403);
+    exit('Invalid request token.');
+}
+
 $userId = (int) $_SESSION['user_id'];
+$csrfToken = csrf_token();
 
 $title = trim($_POST['title'] ?? '');
 $description = trim($_POST['description'] ?? '');
@@ -164,6 +171,11 @@ $_SESSION['pending_issue'] = $pendingIssue;
                 <form action="confirm.php" method="POST">
                     <input
                         type="hidden"
+                        name="csrf_token"
+                        value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+                    >
+                    <input
+                        type="hidden"
                         name="action"
                         value="create"
                     >
@@ -231,6 +243,11 @@ $_SESSION['pending_issue'] = $pendingIssue;
                                     action="confirm.php"
                                     method="POST"
                                 >
+                                <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+                                    >
                                     <input
                                         type="hidden"
                                         name="action"
@@ -258,6 +275,11 @@ $_SESSION['pending_issue'] = $pendingIssue;
                 </table>
 
                 <form action="confirm.php" method="POST">
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+    >
                     <input
                         type="hidden"
                         name="action"
