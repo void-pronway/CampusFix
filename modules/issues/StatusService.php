@@ -58,4 +58,37 @@ class StatusService
             true
         );
     }
+    public static function isOverdue(
+    string $status,
+    DateTimeInterface $lastUpdated,
+    ?DateTimeInterface $now = null
+): bool {
+    $now ??= new DateTimeImmutable();
+
+    $daysElapsed = (int) $lastUpdated->diff($now)->format('%a');
+
+    return match ($status) {
+        self::PENDING => $daysElapsed > 3,
+        self::ASSIGNED => $daysElapsed > 2,
+        self::IN_PROGRESS => $daysElapsed > 7,
+        default => false,
+    };
+}
+
+public static function getEscalationReason(
+    string $status,
+    DateTimeInterface $lastUpdated,
+    ?DateTimeInterface $now = null
+): ?string {
+    if (!self::isOverdue($status, $lastUpdated, $now)) {
+        return null;
+    }
+
+    return match ($status) {
+        self::PENDING => 'Issue has remained pending for more than 3 days.',
+        self::ASSIGNED => 'Assigned issue has not started for more than 2 days.',
+        self::IN_PROGRESS => 'Issue has remained in progress for more than 7 days.',
+        default => null,
+    };
+}
 }
