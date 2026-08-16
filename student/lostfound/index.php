@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
+require_once __DIR__ . '/../../includes/auth_guard.php';
 require_once __DIR__ . '/../../modules/lostfound/LostFoundRepository.php';
 require_once __DIR__ . '/../../modules/lostfound/LostFoundService.php';
+
+require_role(['student']);
 
 $items = [];
 $errorMessage = null;

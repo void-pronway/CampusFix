@@ -3,15 +3,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
+require_once __DIR__ . '/../../includes/auth_guard.php';
+require_once __DIR__ . '/../../includes/csrf.php';
 
 require_once __DIR__ . '/../../modules/lostfound/LostFoundRepository.php';
 require_once __DIR__ . '/../../modules/lostfound/LostFoundService.php';
 require_once __DIR__ . '/../../modules/lostfound/ClaimRepository.php';
 require_once __DIR__ . '/../../modules/lostfound/ClaimService.php';
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+require_role(['student']);
 
 $item = null;
 $errorMessage = null;
@@ -22,7 +22,11 @@ $claimMessage = trim((string) ($_POST['claim_msg'] ?? ''));
 
 function escapeHtml(mixed $value): string
 {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(
+        (string) $value,
+        ENT_QUOTES,
+        'UTF-8'
+    );
 }
 
 function currentUserId(): int
@@ -44,7 +48,9 @@ function currentUserId(): int
 
 try {
     if ($itemId <= 0) {
-        throw new InvalidArgumentException('Invalid Lost & Found item.');
+        throw new InvalidArgumentException(
+            'Invalid Lost & Found item.'
+        );
     }
 
     if (!isset($pdo) || !$pdo instanceof PDO) {
@@ -62,6 +68,7 @@ try {
     }
 
     $lostFoundRepository = new LostFoundRepository($pdo);
+
     $lostFoundService = new LostFoundService(
         $lostFoundRepository
     );
@@ -81,6 +88,12 @@ try {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            throw new RuntimeException(
+                'Invalid CSRF token.'
+            );
+        }
+
         $claimRepository = new ClaimRepository($pdo);
 
         $claimService = new ClaimService(
@@ -106,16 +119,36 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Submit Claim | CampusFix</title>
 
-    <link rel="stylesheet" href="../../assets/css/app.css">
-    <link rel="stylesheet" href="../../assets/css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/forms.css">
-    <link rel="stylesheet" href="../../assets/css/responsive.css">
+    <link
+        rel="stylesheet"
+        href="../../assets/css/app.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../assets/css/dashboard.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../assets/css/forms.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../assets/css/responsive.css"
+    >
 </head>
 
 <body>
@@ -125,44 +158,78 @@ try {
     <aside class="sidebar">
         <h2>CampusFix</h2>
 
-        <a href="../dashboard.php">Dashboard</a>
-        <a href="../issues/report.php">Report Issue</a>
-        <a href="../issues/my_issues.php">My Issues</a>
-        <a href="index.php" class="active">Lost & Found</a>
-        <a href="create.php">Add Lost/Found Item</a>
-        <a href="my_items.php">My Items</a>
-        <a href="../../logout.php">Logout</a>
+        <a href="../dashboard.php">
+            Dashboard
+        </a>
+
+        <a href="../issues/report.php">
+            Report Issue
+        </a>
+
+        <a href="../issues/my_issues.php">
+            My Issues
+        </a>
+
+        <a
+            href="index.php"
+            class="active"
+        >
+            Lost & Found
+        </a>
+
+        <a href="create.php">
+            Add Lost/Found Item
+        </a>
+
+        <a href="my_items.php">
+            My Items
+        </a>
+
+        <a href="../../logout.php">
+            Logout
+        </a>
     </aside>
 
     <main class="main-content">
 
         <div class="page-header">
+
             <div>
                 <h1>Submit Claim</h1>
+
                 <p>
                     Explain why you believe this item belongs to you.
                 </p>
             </div>
 
             <?php if ($itemId > 0): ?>
+
                 <a href="detail.php?id=<?= $itemId ?>">
                     Back to Item
                 </a>
+
             <?php else: ?>
+
                 <a href="index.php">
                     Back to Lost & Found
                 </a>
+
             <?php endif; ?>
+
         </div>
 
         <?php if ($errorMessage !== null): ?>
 
             <section>
-                <p><?= escapeHtml($errorMessage) ?></p>
+
+                <p>
+                    <?= escapeHtml($errorMessage) ?>
+                </p>
 
                 <a href="index.php">
                     Return to Lost & Found
                 </a>
+
             </section>
 
         <?php elseif ($successMessage !== null): ?>
@@ -195,19 +262,27 @@ try {
 
                 <p>
                     <strong>Type:</strong>
-                    <?= escapeHtml($item['item_type'] ?? '') ?>
+
+                    <?= escapeHtml(
+                        $item['item_type'] ?? ''
+                    ) ?>
                 </p>
 
                 <p>
                     <strong>Date:</strong>
-                    <?= escapeHtml($item['item_date'] ?? '') ?>
+
+                    <?= escapeHtml(
+                        $item['item_date'] ?? ''
+                    ) ?>
                 </p>
 
                 <?php if (!empty($item['description'])): ?>
 
                     <p>
                         <?= nl2br(
-                            escapeHtml($item['description'])
+                            escapeHtml(
+                                $item['description']
+                            )
                         ) ?>
                     </p>
 
@@ -217,7 +292,16 @@ try {
 
             <section>
 
-                <form method="post" action="claim.php">
+                <form
+                    method="post"
+                    action="claim.php"
+                >
+
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?= escapeHtml(csrf_token()) ?>"
+                    >
 
                     <input
                         type="hidden"
@@ -226,6 +310,7 @@ try {
                     >
 
                     <div>
+
                         <label for="claim_msg">
                             Claim Explanation
                         </label>
@@ -238,9 +323,11 @@ try {
                             required
                             placeholder="Describe identifying details or other information that proves this item belongs to you."
                         ><?= escapeHtml($claimMessage) ?></textarea>
+
                     </div>
 
                     <div>
+
                         <button type="submit">
                             Submit Claim
                         </button>
@@ -250,6 +337,7 @@ try {
                         >
                             Cancel
                         </a>
+
                     </div>
 
                 </form>
@@ -263,4 +351,5 @@ try {
 </div>
 
 </body>
+
 </html>

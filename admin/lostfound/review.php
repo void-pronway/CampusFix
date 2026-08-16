@@ -3,16 +3,20 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
+require_once __DIR__ . '/../../includes/auth_guard.php';
+require_once __DIR__ . '/../../includes/csrf.php';
+
 require_once __DIR__ . '/../../modules/lostfound/LostFoundRepository.php';
 require_once __DIR__ . '/../../modules/lostfound/LostFoundService.php';
 require_once __DIR__ . '/../../modules/lostfound/ClaimRepository.php';
 require_once __DIR__ . '/../../modules/lostfound/ClaimService.php';
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+require_role(['admin']);
 
-$type = strtolower(trim((string) ($_GET['type'] ?? $_POST['type'] ?? '')));
+$type = strtolower(
+    trim((string) ($_GET['type'] ?? $_POST['type'] ?? ''))
+);
+
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 
 $record = null;
@@ -20,7 +24,11 @@ $errorMessage = null;
 
 function escapeHtml(mixed $value): string
 {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(
+        (string) $value,
+        ENT_QUOTES,
+        'UTF-8'
+    );
 }
 
 function currentAdminId(): int
@@ -60,17 +68,25 @@ try {
     }
 
     $lostFoundRepository = new LostFoundRepository($pdo);
+
     $lostFoundService = new LostFoundService(
         $lostFoundRepository
     );
 
     $claimRepository = new ClaimRepository($pdo);
+
     $claimService = new ClaimService(
         $claimRepository,
         $lostFoundRepository
     );
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!verify_csrf_token($_POST['csrf_token'] ?? null)) {
+            throw new RuntimeException(
+                'Invalid CSRF token.'
+            );
+        }
+
         $action = strtolower(
             trim((string) ($_POST['action'] ?? ''))
         );
@@ -134,16 +150,36 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Review Lost & Found | CampusFix</title>
 
-    <link rel="stylesheet" href="../../assets/css/app.css">
-    <link rel="stylesheet" href="../../assets/css/dashboard.css">
-    <link rel="stylesheet" href="../../assets/css/forms.css">
-    <link rel="stylesheet" href="../../assets/css/responsive.css">
+    <link
+        rel="stylesheet"
+        href="../../assets/css/app.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../assets/css/dashboard.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../assets/css/forms.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../assets/css/responsive.css"
+    >
 </head>
 
 <body>
@@ -151,6 +187,7 @@ try {
 <div class="dashboard">
 
     <aside class="sidebar">
+
         <h2>CampusFix</h2>
 
         <a href="../dashboard.php">
@@ -172,6 +209,7 @@ try {
         <a href="../../logout.php">
             Logout
         </a>
+
     </aside>
 
     <main class="main-content">
@@ -179,11 +217,13 @@ try {
         <div class="page-header">
 
             <div>
+
                 <h1>
                     <?= $type === 'claim'
                         ? 'Review Claim'
                         : 'Review Lost & Found Item' ?>
                 </h1>
+
             </div>
 
             <?php if ($type === 'claim'): ?>
@@ -224,11 +264,13 @@ try {
 
                 <p>
                     <strong>Item ID:</strong>
+
                     #<?= (int) ($record['item_id'] ?? 0) ?>
                 </p>
 
                 <p>
                     <strong>Type:</strong>
+
                     <?= escapeHtml(
                         $record['item_type'] ?? ''
                     ) ?>
@@ -236,6 +278,7 @@ try {
 
                 <p>
                     <strong>Status:</strong>
+
                     <?= escapeHtml(
                         $record['status'] ?? ''
                     ) ?>
@@ -243,6 +286,7 @@ try {
 
                 <p>
                     <strong>Date:</strong>
+
                     <?= escapeHtml(
                         $record['item_date'] ?? ''
                     ) ?>
@@ -250,17 +294,26 @@ try {
 
                 <p>
                     <strong>Category ID:</strong>
-                    <?= (int) ($record['item_category_id'] ?? 0) ?>
+
+                    <?= (int) (
+                        $record['item_category_id'] ?? 0
+                    ) ?>
                 </p>
 
                 <p>
                     <strong>Location ID:</strong>
-                    <?= (int) ($record['location_id'] ?? 0) ?>
+
+                    <?= (int) (
+                        $record['location_id'] ?? 0
+                    ) ?>
                 </p>
 
                 <p>
                     <strong>Posted By:</strong>
-                    User #<?= (int) ($record['posted_by'] ?? 0) ?>
+
+                    User #<?= (int) (
+                        $record['posted_by'] ?? 0
+                    ) ?>
                 </p>
 
                 <?php if (!empty($record['description'])): ?>
@@ -285,7 +338,16 @@ try {
 
                 <section>
 
-                    <form method="post" action="review.php">
+                    <form
+                        method="post"
+                        action="review.php"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="<?= escapeHtml(csrf_token()) ?>"
+                        >
 
                         <input
                             type="hidden"
@@ -296,7 +358,9 @@ try {
                         <input
                             type="hidden"
                             name="id"
-                            value="<?= (int) ($record['item_id'] ?? 0) ?>"
+                            value="<?= (int) (
+                                $record['item_id'] ?? 0
+                            ) ?>"
                         >
 
                         <button
@@ -333,16 +397,23 @@ try {
 
                 <p>
                     <strong>Claim ID:</strong>
-                    #<?= (int) ($record['claim_id'] ?? 0) ?>
+
+                    #<?= (int) (
+                        $record['claim_id'] ?? 0
+                    ) ?>
                 </p>
 
                 <p>
                     <strong>Item ID:</strong>
-                    #<?= (int) ($record['item_id'] ?? 0) ?>
+
+                    #<?= (int) (
+                        $record['item_id'] ?? 0
+                    ) ?>
                 </p>
 
                 <p>
                     <strong>Item Type:</strong>
+
                     <?= escapeHtml(
                         $record['item_type'] ?? ''
                     ) ?>
@@ -350,6 +421,7 @@ try {
 
                 <p>
                     <strong>Item Status:</strong>
+
                     <?= escapeHtml(
                         $record['item_status'] ?? ''
                     ) ?>
@@ -357,6 +429,7 @@ try {
 
                 <p>
                     <strong>Claim Status:</strong>
+
                     <?= escapeHtml(
                         $record['status'] ?? ''
                     ) ?>
@@ -364,7 +437,10 @@ try {
 
                 <p>
                     <strong>Submitted By:</strong>
-                    User #<?= (int) ($record['submitted_by'] ?? 0) ?>
+
+                    User #<?= (int) (
+                        $record['submitted_by'] ?? 0
+                    ) ?>
                 </p>
 
                 <p>
@@ -385,7 +461,16 @@ try {
 
                 <section>
 
-                    <form method="post" action="review.php">
+                    <form
+                        method="post"
+                        action="review.php"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="<?= escapeHtml(csrf_token()) ?>"
+                        >
 
                         <input
                             type="hidden"
@@ -396,10 +481,13 @@ try {
                         <input
                             type="hidden"
                             name="id"
-                            value="<?= (int) ($record['claim_id'] ?? 0) ?>"
+                            value="<?= (int) (
+                                $record['claim_id'] ?? 0
+                            ) ?>"
                         >
 
                         <div>
+
                             <label for="admin_note">
                                 Admin Note
                             </label>
@@ -411,6 +499,7 @@ try {
                                 maxlength="2000"
                                 placeholder="Optional note about this claim decision."
                             ></textarea>
+
                         </div>
 
                         <div>
@@ -446,4 +535,5 @@ try {
 </div>
 
 </body>
+
 </html>
