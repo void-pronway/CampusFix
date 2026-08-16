@@ -82,6 +82,24 @@ $reporterStmt->execute([
 
 $reporter = $reporterStmt->fetch(PDO::FETCH_ASSOC);
 
+$imageUrl = null;
+$storedImagePath = (string) ($issue['image_path'] ?? '');
+
+if (
+    $storedImagePath !== ''
+    && str_starts_with(
+        $storedImagePath,
+        'assets/uploads/issues/'
+    )
+) {
+    $absoluteImagePath =
+        __DIR__ . '/../../' . $storedImagePath;
+
+    if (is_file($absoluteImagePath)) {
+        $imageUrl = '../../' . $storedImagePath;
+    }
+}
+
 $statusHistory = $repository->getStatusHistory($issueId);
 $comments = $repository->getComments($issueId);
 
@@ -121,6 +139,7 @@ function escapeHtml(mixed $value): string
         <div class="page-header">
             <div>
                 <h1><?= escapeHtml($issue['title']) ?></h1>
+
                 <p>
                     Status:
                     <?= escapeHtml($issue['status']) ?>
@@ -153,14 +172,19 @@ function escapeHtml(mixed $value): string
 
             <p>
                 <strong>Location:</strong>
+
                 <?php if ($location !== false): ?>
+
                     <?= escapeHtml(
                         $location['building_name']
                         . ' - '
                         . $location['location_name']
                     ) ?>
+
                 <?php else: ?>
+
                     Unknown
+
                 <?php endif; ?>
             </p>
 
@@ -169,10 +193,12 @@ function escapeHtml(mixed $value): string
                 && $location['floor'] !== null
                 && $location['floor'] !== ''
             ): ?>
+
                 <p>
                     <strong>Floor:</strong>
                     <?= escapeHtml($location['floor']) ?>
                 </p>
+
             <?php endif; ?>
 
             <?php if (
@@ -180,16 +206,32 @@ function escapeHtml(mixed $value): string
                 && $location['room_no'] !== null
                 && $location['room_no'] !== ''
             ): ?>
+
                 <p>
                     <strong>Room:</strong>
                     <?= escapeHtml($location['room_no']) ?>
                 </p>
+
             <?php endif; ?>
 
             <p>
                 <strong>Description:</strong><br>
                 <?= nl2br(escapeHtml($issue['description'])) ?>
             </p>
+
+            <?php if ($imageUrl !== null): ?>
+
+                <h3>Supporting Image</h3>
+
+                <p>
+                    <img
+                        src="<?= escapeHtml($imageUrl) ?>"
+                        alt="Supporting image for this issue"
+                        style="max-width: 100%; height: auto;"
+                    >
+                </p>
+
+            <?php endif; ?>
 
             <p>
                 <strong>Reported:</strong>
@@ -236,28 +278,34 @@ function escapeHtml(mixed $value): string
             </p>
 
             <?php if (!empty($assignment['assignment_note'])): ?>
+
                 <p>
                     <strong>Assignment Note:</strong><br>
                     <?= nl2br(
                         escapeHtml($assignment['assignment_note'])
                     ) ?>
                 </p>
+
             <?php endif; ?>
 
             <?php if (!empty($assignment['resolution_note'])): ?>
+
                 <p>
                     <strong>Resolution Note:</strong><br>
                     <?= nl2br(
                         escapeHtml($assignment['resolution_note'])
                     ) ?>
                 </p>
+
             <?php endif; ?>
 
             <?php if (!empty($assignment['resolved_at'])): ?>
+
                 <p>
                     <strong>Resolved:</strong>
                     <?= escapeHtml($assignment['resolved_at']) ?>
                 </p>
+
             <?php endif; ?>
 
         </section>
@@ -265,6 +313,7 @@ function escapeHtml(mixed $value): string
         <?php if ((string) $issue['status'] === StatusService::ASSIGNED): ?>
 
             <section class="panel">
+
                 <h2>Actions</h2>
 
                 <a
@@ -273,6 +322,7 @@ function escapeHtml(mixed $value): string
                 >
                     Start Work
                 </a>
+
             </section>
 
         <?php elseif (
@@ -280,6 +330,7 @@ function escapeHtml(mixed $value): string
         ): ?>
 
             <section class="panel">
+
                 <h2>Actions</h2>
 
                 <a
@@ -295,6 +346,7 @@ function escapeHtml(mixed $value): string
                 >
                     Resolve Issue
                 </a>
+
             </section>
 
         <?php endif; ?>

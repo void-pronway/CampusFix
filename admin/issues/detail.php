@@ -98,9 +98,18 @@ if ($assignment !== null) {
     $assignedStaff = $staffStmt->fetch(PDO::FETCH_ASSOC);
 }
 
+$lastUpdated = new DateTimeImmutable(
+    (string) $issue['updated_at']
+);
+
 $isOverdue = StatusService::isOverdue(
     (string) $issue['status'],
-    new DateTimeImmutable((string) $issue['updated_at'])
+    $lastUpdated
+);
+
+$escalationReason = StatusService::getEscalationReason(
+    (string) $issue['status'],
+    $lastUpdated
 );
 
 $locationParts = [];
@@ -124,6 +133,24 @@ if ($location !== false) {
 $locationName = $locationParts !== []
     ? implode(' - ', $locationParts)
     : 'Unknown';
+
+$imageUrl = null;
+$storedImagePath = (string) ($issue['image_path'] ?? '');
+
+if (
+    $storedImagePath !== ''
+    && str_starts_with(
+        $storedImagePath,
+        'assets/uploads/issues/'
+    )
+) {
+    $absoluteImagePath =
+        __DIR__ . '/../../' . $storedImagePath;
+
+    if (is_file($absoluteImagePath)) {
+        $imageUrl = '../../' . $storedImagePath;
+    }
+}
 
 function escapeHtml(mixed $value): string
 {
@@ -175,17 +202,16 @@ function escapeHtml(mixed $value): string
             </a>
         </div>
 
-        <?php if ($isOverdue): ?>
+        <?php if ($isOverdue && $escalationReason !== null): ?>
+
             <section class="panel">
                 <h2>Escalation Required</h2>
+
                 <p>
-                    <?= escapeHtml(
-                        StatusService::getEscalationReason(
-                            (string) $issue['status']
-                        )
-                    ) ?>
+                    <?= escapeHtml($escalationReason) ?>
                 </p>
             </section>
+
         <?php endif; ?>
 
         <section class="panel">
@@ -219,7 +245,7 @@ function escapeHtml(mixed $value): string
 
             <p>
                 <strong>Community Confirmations:</strong>
-                <?= $confirmationCount ?>
+                <?= (int) $confirmationCount ?>
             </p>
 
             <p>
@@ -248,6 +274,20 @@ function escapeHtml(mixed $value): string
                 <?= nl2br(escapeHtml($issue['description'])) ?>
             </p>
 
+            <?php if ($imageUrl !== null): ?>
+
+                <h3>Supporting Image</h3>
+
+                <p>
+                    <img
+                        src="<?= escapeHtml($imageUrl) ?>"
+                        alt="Supporting image for this issue"
+                        style="max-width: 100%; height: auto;"
+                    >
+                </p>
+
+            <?php endif; ?>
+
             <?php if (!empty($issue['rejection_note'])): ?>
 
                 <h3>Rejection Note</h3>
@@ -271,7 +311,9 @@ function escapeHtml(mixed $value): string
                 <p>
                     <strong>Name:</strong>
                     <?= escapeHtml(
-                        $reporter['f_name'] . ' ' . $reporter['l_name']
+                        $reporter['f_name']
+                        . ' '
+                        . $reporter['l_name']
                     ) ?>
                 </p>
 
