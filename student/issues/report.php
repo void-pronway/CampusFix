@@ -7,7 +7,37 @@ require_once __DIR__ . '/../../includes/csrf.php';
 
 require_role(['student']);
 
+$categories = $pdo
+    ->query(
+        "SELECT id, name
+         FROM issue_categories
+         ORDER BY name ASC"
+    )
+    ->fetchAll(PDO::FETCH_ASSOC);
+
+$locations = $pdo
+    ->query(
+        "SELECT
+            l.l_id,
+            l.location_name,
+            l.floor,
+            l.room_no,
+            b.building_name
+         FROM locations AS l
+         INNER JOIN building AS b
+            ON b.building_id = l.building_id
+         ORDER BY
+            b.building_name ASC,
+            l.location_name ASC"
+    )
+    ->fetchAll(PDO::FETCH_ASSOC);
+
 $csrfToken = csrf_token();
+
+function escapeHtml(mixed $value): string
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,10 +88,10 @@ $csrfToken = csrf_token();
                 enctype="multipart/form-data"
             >
 
-            <input
+                <input
                     type="hidden"
                     name="csrf_token"
-                    value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>"
+                    value="<?= escapeHtml($csrfToken) ?>"
                 >
 
                 <div class="form-group">
@@ -101,6 +131,12 @@ $csrfToken = csrf_token();
                             Select a category
                         </option>
 
+                        <?php foreach ($categories as $category): ?>
+                            <option value="<?= (int) $category['id'] ?>">
+                                <?= escapeHtml($category['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+
                     </select>
                 </div>
 
@@ -117,6 +153,16 @@ $csrfToken = csrf_token();
                             Select a location
                         </option>
 
+                        <?php foreach ($locations as $location): ?>
+                            <option value="<?= (int) $location['l_id'] ?>">
+                                <?= escapeHtml(
+                                    $location['building_name']
+                                    . ' - '
+                                    . $location['location_name']
+                                ) ?>
+                            </option>
+                        <?php endforeach; ?>
+
                     </select>
                 </div>
 
@@ -130,10 +176,13 @@ $csrfToken = csrf_token();
                         required
                     >
                         <option value="Low">Low</option>
+
                         <option value="Medium" selected>
                             Medium
                         </option>
+
                         <option value="High">High</option>
+
                         <option value="Emergency">
                             Emergency
                         </option>
@@ -152,6 +201,7 @@ $csrfToken = csrf_token();
                         <option value="Public" selected>
                             Public
                         </option>
+
                         <option value="Private">
                             Private
                         </option>
