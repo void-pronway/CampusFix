@@ -297,6 +297,49 @@ public function markAssignmentResolved(
     ]);
 }
 
+public function addComment(
+    int $issueId,
+    int $userId,
+    string $comment
+): int {
+    $stmt = $this->pdo->prepare(
+        "INSERT INTO comments (
+            issue_id,
+            user_id,
+            comment
+        )
+        VALUES (
+            :issue_id,
+            :user_id,
+            :comment
+        )"
+    );
+
+    $stmt->execute([
+        ':issue_id' => $issueId,
+        ':user_id' => $userId,
+        ':comment' => $comment,
+    ]);
+
+    return (int) $this->pdo->lastInsertId();
+}
+
+public function getComments(int $issueId): array
+{
+    $stmt = $this->pdo->prepare(
+        "SELECT *
+         FROM comments
+         WHERE issue_id = :issue_id
+         ORDER BY created_at ASC, id ASC"
+    );
+
+    $stmt->execute([
+        ':issue_id' => $issueId,
+    ]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 }
 
 
