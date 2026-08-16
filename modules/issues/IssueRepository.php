@@ -223,6 +223,80 @@ public function getStatusHistory(int $issueId): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+public function createAssignment(
+    int $issueId,
+    int $staffId,
+    int $assignedBy,
+    ?string $assignmentNote = null
+): int {
+    $stmt = $this->pdo->prepare(
+        "INSERT INTO issue_assignments (
+            issue_id,
+            staff_id,
+            assigned_by,
+            assignment_note
+        )
+        VALUES (
+            :issue_id,
+            :staff_id,
+            :assigned_by,
+            :assignment_note
+        )"
+    );
+
+    $stmt->execute([
+        ':issue_id' => $issueId,
+        ':staff_id' => $staffId,
+        ':assigned_by' => $assignedBy,
+        ':assignment_note' => $assignmentNote,
+    ]);
+
+    return (int) $this->pdo->lastInsertId();
+}
+
+public function findAssignmentsByStaff(int $staffId): array
+{
+    $stmt = $this->pdo->prepare(
+        "SELECT
+            ia.*,
+            i.title,
+            i.priority,
+            i.status,
+            i.location_id,
+            i.category_id
+         FROM issue_assignments ia
+         INNER JOIN issues i
+            ON i.id = ia.issue_id
+         WHERE ia.staff_id = :staff_id
+         ORDER BY ia.assigned_at DESC"
+    );
+
+    $stmt->execute([
+        ':staff_id' => $staffId,
+    ]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function markAssignmentResolved(
+    int $issueId,
+    string $resolutionNote
+): bool {
+    $stmt = $this->pdo->prepare(
+        "UPDATE issue_assignments
+         SET
+            resolution_note = :resolution_note,
+            resolved_at = CURRENT_TIMESTAMP
+         WHERE issue_id = :issue_id
+           AND resolved_at IS NULL"
+    );
+
+    return $stmt->execute([
+        ':resolution_note' => $resolutionNote,
+        ':issue_id' => $issueId,
+    ]);
+}
+
 }
 
 
