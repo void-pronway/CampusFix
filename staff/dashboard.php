@@ -1,6 +1,14 @@
 <?php
 require_once __DIR__ . '/../includes/auth_guard.php';
+require_once __DIR__ . '/../modules/dashboard/DashboardService.php';
+
 require_role(['staff']);
+
+$dashboardService = new DashboardService($pdo);
+$stats = $dashboardService->getStaffDashboardStats((int) $_SESSION['user_id']);
+$recentIssues = $dashboardService->getRecentStaffIssues(
+    (int) $_SESSION['user_id']
+);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,22 +48,22 @@ require_role(['staff']);
 
             <div class="stat-card">
                 <h3>Assigned Issues</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['total_assigned'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>In Progress</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['in_progress_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>Resolved</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['resolved_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>Pending Tasks</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['assigned_issues'] ?></div>
             </div>
 
         </section>
@@ -74,11 +82,22 @@ require_role(['staff']);
                     </tr>
                 </thead>
 
-                <tbody>
-                    <tr>
-                        <td colspan="4">No assigned issues yet.</td>
-                    </tr>
-                </tbody>
+              <tbody>
+              <?php if ($recentIssues): ?>
+                  <?php foreach ($recentIssues as $issue): ?>
+                     <tr>
+                         <td><?= htmlspecialchars($issue['title']) ?></td>
+                         <td>-</td>
+                         <td><?= htmlspecialchars($issue['priority']) ?></td>
+                         <td><?= htmlspecialchars($issue['status']) ?></td>
+                     </tr>
+                  <?php endforeach; ?>
+              <?php else: ?>
+                 <tr>
+                     <td colspan="4">No assigned issues yet.</td>
+                 </tr>
+<?php endif; ?>
+</tbody>
             </table>
 
         </section>
