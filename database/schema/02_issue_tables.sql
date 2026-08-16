@@ -1,7 +1,3 @@
--- =========================================================
--- CampusFix - Issue Management Tables
--- Member 2
--- =========================================================
 
 CREATE TABLE IF NOT EXISTS issues (
     id INT AUTO_INCREMENT PRIMARY KEY,

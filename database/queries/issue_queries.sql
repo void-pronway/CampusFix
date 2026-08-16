@@ -1,13 +1,5 @@
--- =========================================================
--- CampusFix - Issue Management Queries
--- Member 2
--- =========================================================
 
 
--- ---------------------------------------------------------
--- Demo parameters
--- Change these values to match available sample data.
--- ---------------------------------------------------------
 
 SET @student_id = 1;
 SET @issue_id = 1;
@@ -16,9 +8,6 @@ SET @filter_status = 'Pending';
 SET @filter_priority = 'High';
 
 
--- ---------------------------------------------------------
--- 1. Student: View own issues
--- ---------------------------------------------------------
 
 SELECT
     id,
@@ -35,9 +24,6 @@ WHERE reported_by = @student_id
 ORDER BY created_at DESC;
 
 
--- ---------------------------------------------------------
--- 2. Admin: View all issues
--- ---------------------------------------------------------
 
 SELECT
     id,
@@ -52,9 +38,6 @@ FROM issues
 ORDER BY created_at DESC;
 
 
--- ---------------------------------------------------------
--- 3. Filter issues by status
--- ---------------------------------------------------------
 
 SELECT
     id,
@@ -67,9 +50,6 @@ WHERE status = @filter_status
 ORDER BY created_at DESC;
 
 
--- ---------------------------------------------------------
--- 4. Filter issues by priority
--- ---------------------------------------------------------
 
 SELECT
     id,
@@ -82,9 +62,6 @@ WHERE priority = @filter_priority
 ORDER BY created_at DESC;
 
 
--- ---------------------------------------------------------
--- 5. Count confirmations for an issue
--- ---------------------------------------------------------
 
 SELECT
     COUNT(*) AS confirmation_count
@@ -92,9 +69,6 @@ FROM issue_confirmations
 WHERE issue_id = @issue_id;
 
 
--- ---------------------------------------------------------
--- 6. View issue status history
--- ---------------------------------------------------------
 
 SELECT
     old_status,
@@ -107,9 +81,6 @@ WHERE issue_id = @issue_id
 ORDER BY changed_at ASC;
 
 
--- ---------------------------------------------------------
--- 7. View comments for an issue
--- ---------------------------------------------------------
 
 SELECT
     user_id,
@@ -120,9 +91,6 @@ WHERE issue_id = @issue_id
 ORDER BY created_at ASC;
 
 
--- ---------------------------------------------------------
--- 8. View assignments for a staff member
--- ---------------------------------------------------------
 
 SELECT
     ia.id AS assignment_id,
@@ -140,9 +108,6 @@ WHERE ia.staff_id = @staff_id
 ORDER BY ia.assigned_at DESC;
 
 
--- ---------------------------------------------------------
--- 9. Issue counts grouped by status
--- ---------------------------------------------------------
 
 SELECT
     status,
@@ -152,9 +117,6 @@ GROUP BY status
 ORDER BY total_issues DESC;
 
 
--- ---------------------------------------------------------
--- 10. Issue counts grouped by category
--- ---------------------------------------------------------
 
 SELECT
     category_id,
@@ -164,10 +126,6 @@ GROUP BY category_id
 ORDER BY total_issues DESC;
 
 
--- ---------------------------------------------------------
--- 11. Show the 5 most recent issues
--- Demonstrates LIMIT
--- ---------------------------------------------------------
 
 SELECT
     id,
@@ -180,10 +138,6 @@ ORDER BY created_at DESC
 LIMIT 5;
 
 
--- ---------------------------------------------------------
--- 12. Unresolved issue count by category
--- Investigation: Which category has the most unresolved issues?
--- ---------------------------------------------------------
 
 SELECT
     category_id,
@@ -194,10 +148,6 @@ GROUP BY category_id
 ORDER BY unresolved_issues DESC;
 
 
--- ---------------------------------------------------------
--- 13. Locations with multiple high/emergency issues
--- Demonstrates GROUP BY + HAVING
--- ---------------------------------------------------------
 
 SELECT
     location_id,
@@ -210,10 +160,6 @@ HAVING COUNT(*) >= 2
 ORDER BY serious_issue_count DESC;
 
 
--- ---------------------------------------------------------
--- 14. Staff workload
--- Shows number of assignments handled by each staff member
--- ---------------------------------------------------------
 
 SELECT
     staff_id,
@@ -223,10 +169,6 @@ GROUP BY staff_id
 ORDER BY assignment_count DESC;
 
 
--- ---------------------------------------------------------
--- 15. Staff whose workload is above the average
--- Demonstrates a subquery
--- ---------------------------------------------------------
 
 SELECT
     staff_id,
@@ -245,9 +187,6 @@ HAVING COUNT(*) > (
 ORDER BY assignment_count DESC;
 
 
--- ---------------------------------------------------------
--- 16. Issues with the highest community confirmations
--- ---------------------------------------------------------
 
 SELECT
     i.id,
@@ -262,9 +201,6 @@ GROUP BY
 ORDER BY confirmation_count DESC;
 
 
--- ---------------------------------------------------------
--- 17. Search issue titles and descriptions
--- ---------------------------------------------------------
 
 SET @search_text = 'wifi';
 
@@ -281,10 +217,6 @@ WHERE title LIKE CONCAT('%', @search_text, '%')
 ORDER BY created_at DESC;
 
 
--- ---------------------------------------------------------
--- 18. Average number of confirmations per confirmed issue
--- Demonstrates aggregate AVG
--- ---------------------------------------------------------
 
 SELECT
     AVG(confirmation_count) AS average_confirmations
@@ -297,9 +229,6 @@ FROM (
 ) AS confirmation_summary;
 
 
--- ---------------------------------------------------------
--- 19. Resolved assignment duration in hours
--- ---------------------------------------------------------
 
 SELECT
     issue_id,

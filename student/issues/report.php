@@ -84,11 +84,6 @@
                             Select a category
                         </option>
 
-                        <!--
-                            Categories will be loaded from
-                            issue_categories after the shared
-                            database connection is available.
-                        -->
                     </select>
                 </div>
 
@@ -105,10 +100,6 @@
                             Select a location
                         </option>
 
-                        <!--
-                            Locations will be loaded from the
-                            shared locations table later.
-                        -->
                     </select>
                 </div>
 
