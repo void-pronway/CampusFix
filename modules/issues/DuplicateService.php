@@ -17,17 +17,14 @@ class DuplicateService
         string $newTitle,
         int $existingCategoryId,
         int $newCategoryId,
-        string $existingLocation,
-        string $newLocation
+        int $existingLocationId,
+        int $newLocationId
     ): bool {
         if ($existingCategoryId !== $newCategoryId) {
             return false;
         }
 
-        if (
-            self::normalizeText($existingLocation)
-            !== self::normalizeText($newLocation)
-        ) {
+        if ($existingLocationId !== $newLocationId) {
             return false;
         }
 
