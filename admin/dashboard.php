@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/../includes/auth_guard.php';
+require_once __DIR__ . '/../modules/dashboard/DashboardService.php';
+
 require_role(['admin']);
+
+$dashboardService = new DashboardService($pdo);
+$stats = $dashboardService->getAdminDashboardStats();
+$recentIssues = $dashboardService->getRecentIssues();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,32 +51,32 @@ require_role(['admin']);
 
             <div class="stat-card">
                 <h3>Total Issues</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['total_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>Pending</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['pending_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>Assigned</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['assigned_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>In Progress</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['in_progress_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>Resolved</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['resolved_issues'] ?></div>
             </div>
 
             <div class="stat-card">
                 <h3>Pending Claims</h3>
-                <div class="number">0</div>
+                <div class="number"><?= $stats['pending_claims'] ?></div>
             </div>
 
         </section>
@@ -90,9 +96,20 @@ require_role(['admin']);
                 </thead>
 
                 <tbody>
-                    <tr>
-                        <td colspan="4">No issues available yet.</td>
-                    </tr>
+                    <?php if ($recentIssues): ?>
+                         <?php foreach ($recentIssues as $issue): ?>
+                            <tr>
+                               <td><?= (int) $issue['issue_id'] ?></td>
+                               <td><?= htmlspecialchars($issue['title']) ?></td>
+                               <td><?= htmlspecialchars($issue['priority']) ?></td>
+                               <td><?= htmlspecialchars($issue['status']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                 <tr>
+                      <td colspan="4">No issues available yet.</td>
+                 </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
 
