@@ -82,4 +82,27 @@ class IssueRepository
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function updateStatus(
+    int $issueId,
+    string $status,
+    ?string $rejectionNote = null
+): bool {
+    $sql = "
+        UPDATE issues
+        SET
+            status = :status,
+            rejection_note = :rejection_note
+        WHERE id = :id
+    ";
+
+    $stmt = $this->pdo->prepare($sql);
+
+    return $stmt->execute([
+        ':status' => $status,
+        ':rejection_note' => $rejectionNote,
+        ':id' => $issueId,
+    ]);
 }
+}
+
