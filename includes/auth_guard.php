@@ -5,7 +5,7 @@ require_once __DIR__ . '/bootstrap.php';
 function require_login(): void
 {
     if (empty($_SESSION['user_id'])) {
-        header('Location: /CampusFix/login.php');
+        header('Location: /login.php');
         exit;
     }
 }
