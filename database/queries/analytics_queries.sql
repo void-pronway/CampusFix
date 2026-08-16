@@ -59,15 +59,15 @@ ORDER BY total_issues DESC;
 -- =========================================================
 
 SELECT
-    ic.category_id,
-    ic.category_name,
-    COUNT(i.issue_id) AS total_issues
+    ic.id AS category_id,
+    ic.name AS category_name,
+    COUNT(i.id) AS total_issues
 FROM issue_categories AS ic
 LEFT JOIN issues AS i
-    ON i.category_id = ic.category_id
+    ON i.category_id = ic.id
 GROUP BY
-    ic.category_id,
-    ic.category_name
+    ic.id,
+    ic.name
 ORDER BY total_issues DESC;
 
 
@@ -78,7 +78,7 @@ ORDER BY total_issues DESC;
 
 SELECT
     l.l_id AS location_id,
-    COUNT(i.issue_id) AS total_issues
+    COUNT(i.id) AS total_issues
 FROM locations AS l
 LEFT JOIN issues AS i
     ON i.location_id = l.l_id

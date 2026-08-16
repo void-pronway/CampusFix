@@ -76,31 +76,30 @@ class AnalyticsService
      * Issue count grouped by category.
      */
     public function getIssueCategoryBreakdown(): array
-    {
-        $sql = "
-            SELECT
-                ic.category_name AS category,
-                COUNT(i.issue_id) AS total
-            FROM issue_categories AS ic
-            LEFT JOIN issues AS i
-                ON i.category_id = ic.category_id
-            GROUP BY
-                ic.category_id,
-                ic.category_name
-            ORDER BY total DESC, ic.category_name ASC
-        ";
+{
+    $sql = "
+        SELECT
+            ic.name AS category,
+            COUNT(i.id) AS total
+        FROM issue_categories AS ic
+        LEFT JOIN issues AS i
+            ON i.category_id = ic.id
+        GROUP BY
+            ic.id,
+            ic.name
+        ORDER BY total DESC, ic.name ASC
+    ";
 
-        $rows = $this->pdo
-            ->query($sql)
-            ->fetchAll(PDO::FETCH_ASSOC);
+    $rows = $this->pdo
+        ->query($sql)
+        ->fetchAll(PDO::FETCH_ASSOC);
 
-        return $this->formatLabelValueRows(
-            $rows,
-            'category',
-            'total'
-        );
-    }
-
+    return $this->formatLabelValueRows(
+        $rows,
+        'category',
+        'total'
+    );
+}
     /**
      * Monthly issue creation trend.
      */

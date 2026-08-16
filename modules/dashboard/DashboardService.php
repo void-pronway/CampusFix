@@ -157,32 +157,33 @@ class DashboardService
 
         $sql = "
             SELECT
-                COUNT(DISTINCT i.issue_id) AS total_assigned,
+                COUNT(DISTINCT i.id) AS total_assigned,
                 COUNT(
                     DISTINCT CASE
                         WHEN i.status = 'Assigned'
-                        THEN i.issue_id
+                        THEN i.id
                     END
                 ) AS assigned_issues,
                 COUNT(
                     DISTINCT CASE
                         WHEN i.status = 'In Progress'
-                        THEN i.issue_id
+                        THEN i.id
                     END
                 ) AS in_progress_issues,
                 COUNT(
                     DISTINCT CASE
                         WHEN i.status = 'Resolved'
-                        THEN i.issue_id
+                        THEN i.id
                     END
                 ) AS resolved_issues
             FROM issue_assignments AS ia
             INNER JOIN issues AS i
-                ON i.issue_id = ia.issue_id
+                ON i.id = ia.issue_id
             WHERE ia.staff_id = :staff_id
         ";
 
         $stmt = $this->pdo->prepare($sql);
+
         $stmt->execute([
             ':staff_id' => $staffId,
         ]);
@@ -241,16 +242,18 @@ class DashboardService
     {
         $sql = "
             SELECT
-                ic.category_id,
-                ic.category_name,
-                COUNT(i.issue_id) AS total_issues
+                ic.id AS category_id,
+                ic.name AS category_name,
+                COUNT(i.id) AS total_issues
             FROM issue_categories AS ic
             LEFT JOIN issues AS i
-                ON i.category_id = ic.category_id
+                ON i.category_id = ic.id
             GROUP BY
-                ic.category_id,
-                ic.category_name
-            ORDER BY total_issues DESC, ic.category_name ASC
+                ic.id,
+                ic.name
+            ORDER BY
+                total_issues DESC,
+                ic.name ASC
         ";
 
         $rows = $this->pdo
@@ -276,7 +279,7 @@ class DashboardService
 
         $sql = "
             SELECT
-                issue_id,
+                id AS issue_id,
                 title,
                 priority,
                 status,
@@ -287,7 +290,13 @@ class DashboardService
         ";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+
+        $stmt->bindValue(
+            ':limit',
+            $limit,
+            PDO::PARAM_INT
+        );
+
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -308,7 +317,7 @@ class DashboardService
 
         $sql = "
             SELECT
-                issue_id,
+                id AS issue_id,
                 title,
                 priority,
                 status,
@@ -353,14 +362,14 @@ class DashboardService
 
         $sql = "
             SELECT DISTINCT
-                i.issue_id,
+                i.id AS issue_id,
                 i.title,
                 i.priority,
                 i.status,
                 i.created_at
             FROM issue_assignments AS ia
             INNER JOIN issues AS i
-                ON i.issue_id = ia.issue_id
+                ON i.id = ia.issue_id
             WHERE ia.staff_id = :staff_id
             ORDER BY i.created_at DESC
             LIMIT :limit
@@ -439,7 +448,13 @@ class DashboardService
         ";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+
+        $stmt->bindValue(
+            ':limit',
+            $limit,
+            PDO::PARAM_INT
+        );
+
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -470,7 +485,13 @@ class DashboardService
         ";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+
+        $stmt->bindValue(
+            ':limit',
+            $limit,
+            PDO::PARAM_INT
+        );
+
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
