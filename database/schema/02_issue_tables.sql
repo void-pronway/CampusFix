@@ -1,10 +1,14 @@
+CREATE TABLE IF NOT EXISTS issue_categories (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS issues (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    category_id INT NOT NULL,
-    reported_by INT NOT NULL,
-    location_id INT NOT NULL,
+    category_id INT UNSIGNED NOT NULL,
+    reported_by INT UNSIGNED NOT NULL,
+    location_id INT UNSIGNED NOT NULL,
 
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
@@ -37,11 +41,11 @@ CREATE TABLE IF NOT EXISTS issues (
 
     CONSTRAINT fk_issues_reporter
         FOREIGN KEY (reported_by)
-        REFERENCES users(id),
+        REFERENCES users(user_id),
 
     CONSTRAINT fk_issues_location
         FOREIGN KEY (location_id)
-        REFERENCES locations(location_id),
+        REFERENCES locations(l_id),
 
     INDEX idx_issues_category (category_id),
     INDEX idx_issues_reporter (reported_by),
@@ -52,10 +56,10 @@ CREATE TABLE IF NOT EXISTS issues (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS issue_confirmations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    issue_id INT NOT NULL,
-    user_id INT NOT NULL,
+    issue_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
 
     confirmed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -68,16 +72,16 @@ CREATE TABLE IF NOT EXISTS issue_confirmations (
 
     CONSTRAINT fk_issue_confirmations_user
         FOREIGN KEY (user_id)
-        REFERENCES users(id),
+        REFERENCES users(user_id),
 
     INDEX idx_issue_confirmations_user (user_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS issue_status_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    issue_id INT NOT NULL,
-    changed_by INT NOT NULL,
+    issue_id INT UNSIGNED NOT NULL,
+    changed_by INT UNSIGNED NOT NULL,
 
     old_status VARCHAR(50) NULL,
     new_status VARCHAR(50) NOT NULL,
@@ -91,18 +95,18 @@ CREATE TABLE IF NOT EXISTS issue_status_logs (
 
     CONSTRAINT fk_issue_status_logs_changed_by
         FOREIGN KEY (changed_by)
-        REFERENCES users(id),
+        REFERENCES users(user_id),
 
     INDEX idx_issue_status_logs_issue (issue_id),
     INDEX idx_issue_status_logs_changed_at (changed_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS issue_assignments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    issue_id INT NOT NULL,
-    staff_id INT NOT NULL,
-    assigned_by INT NOT NULL,
+    issue_id INT UNSIGNED NOT NULL,
+    staff_id INT UNSIGNED NOT NULL,
+    assigned_by INT UNSIGNED NOT NULL,
 
     assignment_note TEXT NULL,
     resolution_note TEXT NULL,
@@ -116,11 +120,11 @@ CREATE TABLE IF NOT EXISTS issue_assignments (
 
     CONSTRAINT fk_issue_assignments_staff
         FOREIGN KEY (staff_id)
-        REFERENCES users(id),
+        REFERENCES users(user_id),
 
     CONSTRAINT fk_issue_assignments_assigned_by
         FOREIGN KEY (assigned_by)
-        REFERENCES users(id),
+        REFERENCES users(user_id),
 
     INDEX idx_issue_assignments_issue (issue_id),
     INDEX idx_issue_assignments_staff (staff_id),
@@ -129,10 +133,10 @@ CREATE TABLE IF NOT EXISTS issue_assignments (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS comments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    issue_id INT NOT NULL,
-    user_id INT NOT NULL,
+    issue_id INT UNSIGNED NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
 
     comment TEXT NOT NULL,
 
@@ -144,7 +148,7 @@ CREATE TABLE IF NOT EXISTS comments (
 
     CONSTRAINT fk_comments_user
         FOREIGN KEY (user_id)
-        REFERENCES users(id),
+        REFERENCES users(user_id),
 
     INDEX idx_comments_issue (issue_id),
     INDEX idx_comments_user (user_id),
