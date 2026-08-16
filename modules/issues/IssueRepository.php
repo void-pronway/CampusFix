@@ -128,6 +128,53 @@ public function findOpenDuplicateCandidates(
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+public function addConfirmation(int $issueId, int $userId): bool
+{
+    $stmt = $this->pdo->prepare(
+        "INSERT INTO issue_confirmations (issue_id, user_id)
+         VALUES (:issue_id, :user_id)"
+    );
+
+    return $stmt->execute([
+        ':issue_id' => $issueId,
+        ':user_id' => $userId,
+    ]);
 }
+
+public function hasUserConfirmed(int $issueId, int $userId): bool
+{
+    $stmt = $this->pdo->prepare(
+        "SELECT 1
+         FROM issue_confirmations
+         WHERE issue_id = :issue_id
+           AND user_id = :user_id
+         LIMIT 1"
+    );
+
+    $stmt->execute([
+        ':issue_id' => $issueId,
+        ':user_id' => $userId,
+    ]);
+
+    return $stmt->fetchColumn() !== false;
+}
+
+public function countConfirmations(int $issueId): int
+{
+    $stmt = $this->pdo->prepare(
+        "SELECT COUNT(*)
+         FROM issue_confirmations
+         WHERE issue_id = :issue_id"
+    );
+
+    $stmt->execute([
+        ':issue_id' => $issueId,
+    ]);
+
+    return (int) $stmt->fetchColumn();
+}
+
+}
+
 
 
