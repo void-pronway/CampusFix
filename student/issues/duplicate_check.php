@@ -2,41 +2,19 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../includes/bootstrap.php';
+require_once __DIR__ . '/../../includes/auth_guard.php';
 require_once __DIR__ . '/../../modules/issues/IssueService.php';
 require_once __DIR__ . '/../../modules/issues/DuplicateService.php';
 require_once __DIR__ . '/../../modules/issues/IssueRepository.php';
+
+require_role(['student']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: report.php');
     exit;
 }
 
-if (!isset($pdo) || !$pdo instanceof PDO) {
-    http_response_code(503);
-
-    exit(
-        'Database connection is not available yet. '
-        . 'The shared CampusFix bootstrap still needs to provide $pdo.'
-    );
-}
-
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
-
-$userId = isset($_SESSION['user_id'])
-    ? (int) $_SESSION['user_id']
-    : 0;
-
-if ($userId <= 0) {
-    http_response_code(401);
-
-    exit(
-        'Login session is not available yet. '
-        . 'Authentication integration is still pending.'
-    );
-}
+$userId = (int) $_SESSION['user_id'];
 
 $title = trim($_POST['title'] ?? '');
 $description = trim($_POST['description'] ?? '');
