@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../includes/auth_guard.php';
+require_role(['admin']);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,27 +57,34 @@
 </div>
 
 <script>
-new Chart(document.getElementById('statusChart'), {
-    type: 'bar',
-    data: {
-        labels: ['Pending', 'Assigned', 'In Progress', 'Resolved', 'Rejected'],
-        datasets: [{
-            label: 'Issues',
-            data: [0, 0, 0, 0, 0]
-        }]
-    }
-});
+fetch('analytics_data.php')
+    .then(response => response.json())
+    .then(data => {
+        new Chart(document.getElementById('statusChart'), {
+            type: 'bar',
+            data: {
+                labels: data.issues.by_status.labels,
+                datasets: [{
+                    label: 'Issues',
+                    data: data.issues.by_status.values
+                }]
+            }
+        });
 
-new Chart(document.getElementById('categoryChart'), {
-    type: 'pie',
-    data: {
-        labels: ['Electrical', 'Internet', 'Cleaning', 'Water', 'Other'],
-        datasets: [{
-            label: 'Issues',
-            data: [0, 0, 0, 0, 0]
-        }]
-    }
-});
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'pie',
+            data: {
+                labels: data.issues.by_category.labels,
+                datasets: [{
+                    label: 'Issues',
+                    data: data.issues.by_category.values
+                }]
+            }
+        });
+    })
+    .catch(error => {
+        console.error('Unable to load analytics data:', error);
+    });
 </script>
 
 </body>
