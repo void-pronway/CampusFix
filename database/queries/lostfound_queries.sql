@@ -1,26 +1,3 @@
--- =========================================================
--- CampusFix
--- Member 3: Lost & Found Query Demonstrations
--- File: database/queries/lostfound_queries.sql
--- =========================================================
-
--- These queries demonstrate:
--- SELECT
--- WHERE
--- ORDER BY
--- LIMIT
--- JOIN
--- GROUP BY
--- aggregate functions
--- subqueries
--- Lost & Found and Claim reporting
-
-
--- =========================================================
--- 1. VIEW ALL APPROVED LOST & FOUND ITEMS
--- WHERE + ORDER BY
--- =========================================================
-
 SELECT
     item_id,
     item_category_id,
@@ -37,12 +14,6 @@ FROM lost_found_items
 WHERE status = 'Approved'
 ORDER BY created_at DESC;
 
-
--- =========================================================
--- 2. VIEW APPROVED LOST ITEMS
--- WHERE + ORDER BY
--- =========================================================
-
 SELECT
     item_id,
     item_name,
@@ -55,12 +26,6 @@ WHERE status = 'Approved'
   AND item_type = 'Lost'
 ORDER BY item_date DESC;
 
-
--- =========================================================
--- 3. VIEW APPROVED FOUND ITEMS
--- WHERE + ORDER BY
--- =========================================================
-
 SELECT
     item_id,
     item_name,
@@ -72,12 +37,6 @@ FROM lost_found_items
 WHERE status = 'Approved'
   AND item_type = 'Found'
 ORDER BY item_date DESC;
-
-
--- =========================================================
--- 4. SEARCH LOST & FOUND ITEMS BY KEYWORD
--- WHERE + LIKE
--- =========================================================
 
 SELECT
     item_id,
@@ -94,12 +53,6 @@ WHERE status = 'Approved'
       )
 ORDER BY created_at DESC;
 
-
--- =========================================================
--- 5. SHOW MOST RECENT APPROVED ITEMS
--- ORDER BY + LIMIT
--- =========================================================
-
 SELECT
     item_id,
     item_type,
@@ -110,12 +63,6 @@ FROM lost_found_items
 WHERE status = 'Approved'
 ORDER BY created_at DESC
 LIMIT 10;
-
-
--- =========================================================
--- 6. JOIN ITEMS WITH THEIR CATEGORY AND LOCATION
--- INNER JOIN
--- =========================================================
 
 SELECT
     lfi.item_id,
@@ -133,12 +80,6 @@ INNER JOIN locations AS loc
 WHERE lfi.status = 'Approved'
 ORDER BY lfi.created_at DESC;
 
-
--- =========================================================
--- 7. COUNT ITEMS BY STATUS
--- GROUP BY + COUNT
--- =========================================================
-
 SELECT
     status,
     COUNT(*) AS total_items
@@ -146,24 +87,12 @@ FROM lost_found_items
 GROUP BY status
 ORDER BY total_items DESC;
 
-
--- =========================================================
--- 8. COUNT LOST AND FOUND ITEMS
--- GROUP BY + COUNT
--- =========================================================
-
 SELECT
     item_type,
     COUNT(*) AS total_items
 FROM lost_found_items
 GROUP BY item_type
 ORDER BY total_items DESC;
-
-
--- =========================================================
--- 9. COUNT ITEMS BY CATEGORY
--- JOIN + GROUP BY + COUNT
--- =========================================================
 
 SELECT
     lfc.item_category_id,
@@ -173,13 +102,6 @@ LEFT JOIN lost_found_items AS lfi
     ON lfi.item_category_id = lfc.item_category_id
 GROUP BY lfc.item_category_id
 ORDER BY total_items DESC;
-
-
--- =========================================================
--- 10. VIEW ITEMS POSTED BY A SPECIFIC USER
--- WHERE
--- Change user_id value when testing.
--- =========================================================
 
 SELECT
     item_id,
@@ -192,12 +114,6 @@ FROM lost_found_items
 WHERE posted_by = 1
 ORDER BY created_at DESC;
 
-
--- =========================================================
--- 11. ADMIN: VIEW ITEMS WAITING FOR APPROVAL
--- WHERE + ORDER BY
--- =========================================================
-
 SELECT
     item_id,
     posted_by,
@@ -209,12 +125,6 @@ SELECT
 FROM lost_found_items
 WHERE status = 'Pending'
 ORDER BY created_at ASC;
-
-
--- =========================================================
--- 12. VIEW CLAIMS WITH ITEM INFORMATION
--- INNER JOIN
--- =========================================================
 
 SELECT
     c.claim_id,
@@ -233,12 +143,6 @@ INNER JOIN lost_found_items AS lfi
     ON lfi.item_id = c.item_id
 ORDER BY c.created_at DESC;
 
-
--- =========================================================
--- 13. ADMIN: VIEW PENDING CLAIMS
--- JOIN + WHERE + ORDER BY
--- =========================================================
-
 SELECT
     c.claim_id,
     c.item_id,
@@ -253,24 +157,12 @@ INNER JOIN lost_found_items AS lfi
 WHERE c.status = 'Pending'
 ORDER BY c.created_at ASC;
 
-
--- =========================================================
--- 14. COUNT CLAIMS BY STATUS
--- GROUP BY + COUNT
--- =========================================================
-
 SELECT
     status,
     COUNT(*) AS total_claims
 FROM claims
 GROUP BY status
 ORDER BY total_claims DESC;
-
-
--- =========================================================
--- 15. ITEMS THAT HAVE AT LEAST ONE CLAIM
--- SUBQUERY using EXISTS
--- =========================================================
 
 SELECT
     lfi.item_id,
@@ -284,12 +176,6 @@ WHERE EXISTS (
     WHERE c.item_id = lfi.item_id
 )
 ORDER BY lfi.created_at DESC;
-
-
--- =========================================================
--- 16. APPROVED ITEMS WITH NO PENDING CLAIM
--- SUBQUERY using NOT EXISTS
--- =========================================================
 
 SELECT
     lfi.item_id,
@@ -305,12 +191,6 @@ WHERE lfi.status = 'Approved'
           AND c.status = 'Pending'
       )
 ORDER BY lfi.created_at DESC;
-
-
--- =========================================================
--- 17. ITEMS WITH NUMBER OF CLAIMS
--- LEFT JOIN + GROUP BY + COUNT
--- =========================================================
 
 SELECT
     lfi.item_id,
@@ -328,12 +208,6 @@ GROUP BY
     lfi.status
 ORDER BY total_claims DESC;
 
-
--- =========================================================
--- 18. ITEMS RECEIVING MORE THAN ONE CLAIM
--- GROUP BY + HAVING + aggregate
--- =========================================================
-
 SELECT
     lfi.item_id,
     lfi.item_name,
@@ -346,12 +220,6 @@ GROUP BY
     lfi.item_name
 HAVING COUNT(c.claim_id) > 1
 ORDER BY total_claims DESC;
-
-
--- =========================================================
--- 19. RETURNED ITEMS WITH APPROVED CLAIM
--- JOIN + WHERE
--- =========================================================
 
 SELECT
     lfi.item_id,
@@ -368,12 +236,6 @@ INNER JOIN claims AS c
 WHERE lfi.status = 'Returned'
   AND c.status = 'Approved'
 ORDER BY c.updated_at DESC;
-
-
--- =========================================================
--- 20. LOST & FOUND SUMMARY
--- AGGREGATE FUNCTIONS
--- =========================================================
 
 SELECT
     COUNT(*) AS total_items,
