@@ -1,25 +1,95 @@
 USE campusfix;
 
-START TRANSACTION;
+INSERT INTO departments (d_name)
+VALUES ('DBMS Demo Department');
 
-INSERT INTO issue_categories (name)
-VALUES ('Temporary Test Category');
+SELECT *
+FROM departments
+WHERE d_name = 'DBMS Demo Department';
 
-SET @category_id = LAST_INSERT_ID();
+SELECT
+    user_id,
+    f_name,
+    l_name,
+    role,
+    email,
+    status
+FROM users
+WHERE status = 'active';
 
-SELECT id, name
-FROM issue_categories
-WHERE id = @category_id;
+SELECT
+    user_id,
+    f_name,
+    l_name,
+    role,
+    email,
+    created_at
+FROM users
+ORDER BY created_at DESC;
 
-UPDATE issue_categories
-SET name = 'Updated Test Category'
-WHERE id = @category_id;
+SELECT
+    user_id,
+    f_name,
+    l_name,
+    role,
+    email,
+    created_at
+FROM users
+ORDER BY created_at DESC
+LIMIT 5;
 
-SELECT id, name
-FROM issue_categories
-WHERE id = @category_id;
+UPDATE departments
+SET d_name = 'DBMS Demo Department Updated'
+WHERE d_name = 'DBMS Demo Department';
 
-DELETE FROM issue_categories
-WHERE id = @category_id;
+SELECT *
+FROM departments
+WHERE d_name = 'DBMS Demo Department Updated';
 
-COMMIT;
+SELECT
+    u.user_id,
+    CONCAT(u.f_name, ' ', u.l_name) AS full_name,
+    u.email,
+    u.role,
+    u.status,
+    d.d_name AS department
+FROM users AS u
+LEFT JOIN departments AS d
+    ON u.dept_id = d.dept_id
+ORDER BY u.user_id ASC;
+
+SELECT
+    role,
+    COUNT(*) AS total_users
+FROM users
+GROUP BY role
+ORDER BY total_users DESC;
+
+SELECT
+    d.dept_id,
+    d.d_name,
+    COUNT(u.user_id) AS total_users
+FROM departments AS d
+LEFT JOIN users AS u
+    ON d.dept_id = u.dept_id
+GROUP BY
+    d.dept_id,
+    d.d_name
+ORDER BY total_users DESC;
+
+SELECT
+    dept_id,
+    d_name
+FROM departments
+WHERE dept_id IN (
+    SELECT DISTINCT dept_id
+    FROM users
+    WHERE dept_id IS NOT NULL
+);
+
+DELETE FROM departments
+WHERE d_name = 'DBMS Demo Department Updated';
+
+SELECT *
+FROM departments
+WHERE d_name = 'DBMS Demo Department Updated';
