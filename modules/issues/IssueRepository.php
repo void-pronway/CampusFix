@@ -340,6 +340,68 @@ public function getComments(int $issueId): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+public function findAll(array $filters = []): array
+{
+    $sql = "SELECT * FROM issues WHERE 1 = 1";
+    $params = [];
+
+    if (!empty($filters['status'])) {
+        $sql .= " AND status = :status";
+        $params[':status'] = $filters['status'];
+    }
+
+    if (!empty($filters['priority'])) {
+        $sql .= " AND priority = :priority";
+        $params[':priority'] = $filters['priority'];
+    }
+
+    if (!empty($filters['category_id'])) {
+        $sql .= " AND category_id = :category_id";
+        $params[':category_id'] = (int) $filters['category_id'];
+    }
+
+    if (!empty($filters['location_id'])) {
+        $sql .= " AND location_id = :location_id";
+        $params[':location_id'] = (int) $filters['location_id'];
+    }
+
+    if (!empty($filters['search'])) {
+        $sql .= "
+            AND (
+                title LIKE :search
+                OR description LIKE :search
+            )
+        ";
+        $params[':search'] = '%' . trim($filters['search']) . '%';
+    }
+
+    $sql .= " ORDER BY created_at DESC";
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function getLatestAssignment(int $issueId): ?array
+{
+    $stmt = $this->pdo->prepare(
+        "SELECT *
+         FROM issue_assignments
+         WHERE issue_id = :issue_id
+         ORDER BY assigned_at DESC, id DESC
+         LIMIT 1"
+    );
+
+    $stmt->execute([
+        ':issue_id' => $issueId,
+    ]);
+
+    $assignment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $assignment !== false ? $assignment : null;
+}
+
 }
 
 
