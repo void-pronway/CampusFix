@@ -1,10 +1,10 @@
 USE campusfix;
 
-DROP TRIGGER IF EXISTS trg_issue_status_change;
+DROP TRIGGER IF EXISTS trg_issue_status_history;
 
 DELIMITER $$
 
-CREATE TRIGGER trg_issue_status_change
+CREATE TRIGGER trg_issue_status_history
 AFTER UPDATE ON issues
 FOR EACH ROW
 BEGIN
@@ -18,10 +18,10 @@ BEGIN
         )
         VALUES (
             NEW.id,
-            COALESCE(@campusfix_changed_by, NEW.reported_by),
+            COALESCE(@changed_by, NEW.reported_by),
             OLD.status,
             NEW.status,
-            @campusfix_status_note
+            @status_note
         );
     END IF;
 END$$

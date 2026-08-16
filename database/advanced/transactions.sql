@@ -2,28 +2,25 @@ USE campusfix;
 
 START TRANSACTION;
 
-SET @claim_id = (
-    SELECT claim_id
-    FROM claims
-    WHERE status = 'Pending'
-    ORDER BY claim_id
-    LIMIT 1
-);
+SET @changed_by = 3;
+SET @status_note = 'Staff started work';
 
-SET @item_id = (
-    SELECT item_id
-    FROM claims
-    WHERE claim_id = @claim_id
-);
+UPDATE issues
+SET status = 'In Progress'
+WHERE id = 1
+  AND status = 'Assigned';
 
-UPDATE claims
-SET
-    status = 'Approved',
-    admin_note = 'Claim approved through transaction demonstration'
-WHERE claim_id = @claim_id;
+SELECT id, title, status
+FROM issues
+WHERE id = 1;
 
-UPDATE lost_found_items
-SET status = 'Returned'
-WHERE item_id = @item_id;
+SELECT issue_id, changed_by, old_status, new_status, note
+FROM issue_status_logs
+WHERE issue_id = 1
+ORDER BY id DESC
+LIMIT 1;
 
 ROLLBACK;
+
+SET @changed_by = NULL;
+SET @status_note = NULL;

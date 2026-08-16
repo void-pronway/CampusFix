@@ -394,13 +394,13 @@ WHERE NOT EXISTS (
 );
 
 
-SET @campusfix_changed_by = (
+SET @changed_by = (
     SELECT user_id
     FROM users
     WHERE email = 'admin1@campusfix.test'
 );
 
-SET @campusfix_status_note = 'Sample data status setup';
+SET @status_note = 'Sample data status setup';
 
 UPDATE issues
 SET status = 'Assigned'
@@ -420,5 +420,5 @@ WHERE title IN (
     'Slippery floor at Food Court'
 );
 
-SET @campusfix_changed_by = NULL;
-SET @campusfix_status_note = NULL;
+SET @changed_by = NULL;
+SET @status_note = NULL;
