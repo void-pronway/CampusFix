@@ -1,6 +1,14 @@
 <?php
 require_once __DIR__ . '/../includes/auth_guard.php';
+require_once __DIR__ . '/../modules/dashboard/DashboardService.php';
+
 require_role(['student']);
+
+$userId = (int) $_SESSION['user_id'];
+
+$dashboardService = new DashboardService($pdo);
+$stats = $dashboardService->getStudentDashboardStats($userId);
+$recentIssues = $dashboardService->getRecentStudentIssues($userId, 5);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,7 +32,7 @@ require_role(['student']);
 
         <a href="dashboard.php" class="active">Dashboard</a>
         <a href="issues/report.php">Report Issue</a>
-        <a href="issues/my.php">My Issues</a>
+        <a href="issues/my_issues.php">My Issues</a>
         <a href="lostfound/index.php">Lost & Found</a>
         <a href="lostfound/create.php">Add Lost/Found Item</a>
         <a href="../logout.php">Logout</a>
@@ -43,22 +51,30 @@ require_role(['student']);
 
             <div class="stat-card">
                 <h3>Total Issues</h3>
-                <div class="number">0</div>
+                <div class="number">
+                    <?= (int) $stats['total_issues'] ?>
+                </div>
             </div>
 
             <div class="stat-card">
                 <h3>Pending</h3>
-                <div class="number">0</div>
+                <div class="number">
+                    <?= (int) $stats['pending_issues'] ?>
+                </div>
             </div>
 
             <div class="stat-card">
                 <h3>In Progress</h3>
-                <div class="number">0</div>
+                <div class="number">
+                    <?= (int) $stats['in_progress_issues'] ?>
+                </div>
             </div>
 
             <div class="stat-card">
                 <h3>Resolved</h3>
-                <div class="number">0</div>
+                <div class="number">
+                    <?= (int) $stats['resolved_issues'] ?>
+                </div>
             </div>
 
         </section>
@@ -77,9 +93,41 @@ require_role(['student']);
                 </thead>
 
                 <tbody>
+
+                <?php if (!$recentIssues): ?>
+
                     <tr>
                         <td colspan="4">No issues available yet.</td>
                     </tr>
+
+                <?php else: ?>
+
+                    <?php foreach ($recentIssues as $issue): ?>
+
+                        <tr>
+                            <td>
+                                <a href="issues/detail.php?id=<?= (int) $issue['issue_id'] ?>">
+                                    <?= htmlspecialchars($issue['title'], ENT_QUOTES, 'UTF-8') ?>
+                                </a>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($issue['priority'], ENT_QUOTES, 'UTF-8') ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($issue['status'], ENT_QUOTES, 'UTF-8') ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($issue['created_at'], ENT_QUOTES, 'UTF-8') ?>
+                            </td>
+                        </tr>
+
+                    <?php endforeach; ?>
+
+                <?php endif; ?>
+
                 </tbody>
             </table>
         </section>
