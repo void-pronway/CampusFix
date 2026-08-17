@@ -113,3 +113,51 @@ textarea.form-control {
     color: #2563eb;
     font-weight: 600;
 }
+
+.main-content form > div {
+    margin-bottom: 16px;
+}
+
+.main-content form label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.main-content form input:not([type="hidden"]),
+.main-content form select,
+.main-content form textarea {
+    width: 100%;
+    max-width: 600px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    font: inherit;
+}
+
+.main-content form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.main-content form button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.main-content form button:hover {
+    background: #1d4ed8;
+}
+
+.main-content form a {
+    display: inline-block;
+    margin-left: 10px;
+    color: #2563eb;
+    font-weight: 600;
+}
